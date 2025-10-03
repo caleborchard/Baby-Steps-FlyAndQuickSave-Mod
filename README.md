@@ -1,4 +1,9 @@
 # Baby Steps Fly and QuickSave Mod
+
+# How to install
+Follow the start of [this video](https://www.youtube.com/watch?v=QvQRWCoEZUk) on installing MelonLoader Nightly, and instead of putting the DLL files for the multiplayer mod put the single DLL file for this mod in there.
+
+# Information
 A simple mode that adds a flycam (that allows you to teleport the player) and quicksaves.
 
 F1 to toggle the fly cam
