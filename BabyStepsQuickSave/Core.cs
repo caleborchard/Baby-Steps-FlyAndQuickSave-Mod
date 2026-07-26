@@ -1,14 +1,9 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
 using MelonLoader;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(BabyStepsQuickSave.Core), "FlyAndQuickSave", "1.0.0", "Caleb Orchard", null)]
+[assembly: MelonInfo(typeof(BabyStepsQuickSave.Core), "FlyAndQuickSave", "4.0.0", "Caleb Orchard; Edit by Fynnoverse", null)]
 [assembly: MelonGame("DefaultCompany", "BabySteps")]
 
 namespace BabyStepsQuickSave
@@ -26,15 +21,11 @@ namespace BabyStepsQuickSave
 
         public override void OnInitializeMelon()
         {
-            GameObject go = new GameObject("DevCheatChaperone_Mod");
+            var go = new GameObject("DevCheatChaperone_Mod");
             dCC = go.AddComponent<DevCheatChaperone>();
             dCGH = go.AddComponent<DevCheatsGoHere>();
 
             // Find Dudest on first update instead to avoid null reference
-
-            // Apply Harmony patches
-            var harmony = new HarmonyLib.Harmony("BabyStepsQuickSave.InputOverride");
-            harmony.PatchAll();
         }
 
         public override void OnUpdate()
@@ -51,11 +42,22 @@ namespace BabyStepsQuickSave
             {
                 if (pm == null)
                 {
-                    GameObject dudest = GameObject.Find("Dudest");
+                    var dudest = GameObject.Find("Dudest");
+                    if (dudest == null)
+                    {
+                        MelonLogger.Warning("[FlyAndQuickSave] 'Dudest' GameObject nicht gefunden! Bitte erst ins Spiel laden.");
+                        return;
+                    }
                     pm = dudest.GetComponent<PlayerMovement>();
+                    if (pm == null)
+                    {
+                        MelonLogger.Warning("[FlyAndQuickSave] PlayerMovement-Komponente nicht gefunden!");
+                        return;
+                    }
                 }
                 pm.ToggleFlyCam();
                 flyCamActive = !flyCamActive;
+                MelonLogger.Msg("[FlyAndQuickSave] FlyCam " + (flyCamActive ? "aktiviert" : "deaktiviert"));
             }
             else if (Input.GetKeyDown(KeyCode.F3))
             {
@@ -75,19 +77,17 @@ namespace BabyStepsQuickSave
             else
             {
                 // Handle scroll wheel normally when not in fly cam
-                float scroll = Input.GetAxis("Mouse ScrollWheel");
-                if (scroll != 0 && pm != null)
+                var scroll = Input.GetAxis("Mouse ScrollWheel");
+                if (scroll == 0 || pm == null) return;
+                if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt))
                 {
-                    if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt))
-                    {
-                        if (scroll > 0f) pm.IncreaseFlyCamFOV();
-                        else pm.DecreaseFlyCamFOV();
-                    }
-                    else
-                    {
-                        if (scroll > 0f) pm.IncreadFlyCamSpd();
-                        else pm.DecreaseFlyCamSpd();
-                    }
+                    if (scroll > 0f) pm.IncreaseFlyCamFOV();
+                    else pm.DecreaseFlyCamFOV();
+                }
+                else
+                {
+                    if (scroll > 0f) pm.IncreadFlyCamSpd();
+                    else pm.DecreaseFlyCamSpd();
                 }
             }
         }
@@ -95,7 +95,7 @@ namespace BabyStepsQuickSave
         private void HandleFlyCamMovement()
         {
             // Calculate movement direction based on key inputs
-            Vector3 moveDirection = Vector3.zero;
+            var moveDirection = Vector3.zero;
 
             // Forward/Backward (W/S)
             if (Input.GetKey(KeyCode.W))
@@ -120,9 +120,9 @@ namespace BabyStepsQuickSave
                 moveDirection.Normalize();
 
             // Calculate speed boost based on modifier keys
-            float speedBoost = 1f;
-            bool shiftHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-            bool ctrlHeld = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+            var speedBoost = 1f;
+            var shiftHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            var ctrlHeld = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
 
             if (shiftHeld && ctrlHeld)
                 speedBoost = 7f;
@@ -132,140 +132,29 @@ namespace BabyStepsQuickSave
                 speedBoost = 2f;
 
             // Align movement to fly cam rotation
-            Transform flyCamTransform = pm.flyCam.transform;
-            Vector3 alignedMovement = flyCamTransform.TransformDirection(moveDirection);
+            var flyCamTransform = pm.flyCam.transform;
+            var alignedMovement = flyCamTransform.TransformDirection(moveDirection);
 
             // Apply speed and move the camera
-            Vector3 velocity = alignedMovement * Mathf.Abs(flyCamSpeed * flyCamSpeedMultiplier * speedBoost);
+            var velocity = alignedMovement * Mathf.Abs(flyCamSpeed * flyCamSpeedMultiplier * speedBoost);
             flyCamTransform.position += velocity * Time.deltaTime;
         }
 
         private void HandleFlyCamScrollWheel()
         {
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (scroll != 0)
+            var scroll = Input.GetAxis("Mouse ScrollWheel");
+            if (scroll == 0) return;
+            if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt))
             {
-                if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt))
-                {
-                    // FOV adjustment
-                    if (scroll > 0f) pm.IncreaseFlyCamFOV();
-                    else pm.DecreaseFlyCamFOV();
-                }
-                else
-                {
-                    // Speed adjustment (custom implementation)
-                    if (scroll > 0f)
-                        flyCamSpeedMultiplier = Mathf.Min(flyCamSpeedMultiplier * 1.2f, 10f);
-                    else
-                        flyCamSpeedMultiplier = Mathf.Max(flyCamSpeedMultiplier * 0.8f, 0.1f);
-                }
+                // FOV adjustment
+                if (scroll > 0f) pm.IncreaseFlyCamFOV();
+                else pm.DecreaseFlyCamFOV();
             }
-        }
-    }
-
-    // Block Input class methods when fly cam is active
-    [HarmonyPatch(typeof(Input))]
-    public static class InputPatches
-    {
-        [HarmonyPrefix]
-        [HarmonyPatch("GetKey", typeof(KeyCode))]
-        public static bool GetKeyPrefix(KeyCode key, ref bool __result)
-        {
-            if (!Core.flyCamActive) return true;
-
-            // Allow fly cam control keys to pass through
-            if (key == KeyCode.W || key == KeyCode.A || key == KeyCode.S ||
-                key == KeyCode.D || key == KeyCode.Q || key == KeyCode.E ||
-                key == KeyCode.LeftShift || key == KeyCode.RightShift ||
-                key == KeyCode.LeftControl || key == KeyCode.RightControl ||
-                key == KeyCode.LeftAlt || key == KeyCode.RightAlt ||
-                key == KeyCode.F1 || key == KeyCode.F3 || key == KeyCode.F4 ||
-                key == KeyCode.F9 || key == KeyCode.F10)
+            else
             {
-                return true;
+                // Speed adjustment (custom implementation)
+                flyCamSpeedMultiplier = scroll > 0f ? Mathf.Min(flyCamSpeedMultiplier * 1.2f, 10f) : Mathf.Max(flyCamSpeedMultiplier * 0.8f, 0.1f);
             }
-
-            // Block all other keys
-            __result = false;
-            return false;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch("GetKeyDown", typeof(KeyCode))]
-        public static bool GetKeyDownPrefix(KeyCode key, ref bool __result)
-        {
-            if (!Core.flyCamActive) return true;
-
-            // Allow fly cam toggle and control keys
-            if (key == KeyCode.F1 || key == KeyCode.F3 || key == KeyCode.F4 ||
-                key == KeyCode.F9 || key == KeyCode.F10)
-            {
-                return true;
-            }
-
-            __result = false;
-            return false;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch("GetAxis", typeof(string))]
-        public static bool GetAxisPrefix(string axisName, ref float __result)
-        {
-            if (!Core.flyCamActive) return true;
-
-            // Allow mouse movement axes and scroll wheel for fly cam
-            if (axisName == "Mouse ScrollWheel" ||
-                axisName == "Mouse X" ||
-                axisName == "Mouse Y")
-            {
-                return true;
-            }
-
-            // Block all other axes
-            __result = 0f;
-            return false;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch("GetMouseButton", typeof(int))]
-        public static bool GetMouseButtonPrefix(int button, ref bool __result)
-        {
-            if (!Core.flyCamActive) return true;
-
-            // Allow left click (button 0)
-            if (button == 0) return true;
-
-            // Block all other mouse buttons
-            __result = false;
-            return false;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch("GetMouseButtonDown", typeof(int))]
-        public static bool GetMouseButtonDownPrefix(int button, ref bool __result)
-        {
-            if (!Core.flyCamActive) return true;
-
-            // Allow left click (button 0)
-            if (button == 0) return true;
-
-            // Block all other mouse button downs
-            __result = false;
-            return false;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch("GetMouseButtonUp", typeof(int))]
-        public static bool GetMouseButtonUpPrefix(int button, ref bool __result)
-        {
-            if (!Core.flyCamActive) return true;
-
-            // Allow left click (button 0)
-            if (button == 0) return true;
-
-            // Block all other mouse button ups
-            __result = false;
-            return false;
         }
     }
 }
