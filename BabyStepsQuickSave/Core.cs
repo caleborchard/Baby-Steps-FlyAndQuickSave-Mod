@@ -3,7 +3,7 @@ using Il2Cpp;
 using MelonLoader;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(BabyStepsQuickSave.Core), "FlyAndQuickSave", "2.0.0", "Caleb Orchard; Edit by Fynnoverse", null)]
+[assembly: MelonInfo(typeof(BabyStepsQuickSave.Core), "FlyAndQuickSave", "4.0.0", "Caleb Orchard; Edit by Fynnoverse", null)]
 [assembly: MelonGame("DefaultCompany", "BabySteps")]
 
 namespace BabyStepsQuickSave
